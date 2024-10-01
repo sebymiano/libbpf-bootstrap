@@ -201,9 +201,7 @@ int main(int argc, char *argv[])
 	// xdp_flags |= XDP_FLAGS_DRV_MODE;
 	xdp_flags |= XDP_FLAGS_SKB_MODE;
 	nr_cpus = libbpf_num_possible_cpus();
-
-	// snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
-
+	
 	sigset_t signal_mask;
 	sigemptyset(&signal_mask);
 	sigaddset(&signal_mask, SIGINT);
@@ -224,15 +222,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// bpf_program__set_type(obj->progs.bmc_rx_filter_main, BPF_PROG_TYPE_XDP);
-	// bpf_program__set_type(obj->progs.bmc_tx_filter_main, BPF_PROG_TYPE_SCHED_CLS);
-
 	prog_count = skel->skeleton->prog_cnt;
-	// prog_count = sizeof(progs) / sizeof(progs[0]);
 
 	for (int i = 0; i < prog_count; i++) {
 		progs[i].prog = bpf_object__find_program_by_name(skel->obj, progs[i].name);
-		// progs[i].prog = bpf_object__find_program_by_title(obj, progs[i].name);
 		if (!progs[i].prog) {
 			fprintf(stderr, "Error: bpf_object__find_program_by_name failed\n");
 			return 1;
@@ -242,9 +235,6 @@ int main(int argc, char *argv[])
 
 	bpf_program__set_autoattach(skel->progs.bmc_rx_filter_main, false);
 	bpf_program__set_autoattach(skel->progs.bmc_tx_filter_main, false);
-
-	// load_attr.obj = obj;
-	// load_attr.log_level = LIBBPF_WARN;
 
 	err = bmc_bpf__load(skel);
 	if (err) {

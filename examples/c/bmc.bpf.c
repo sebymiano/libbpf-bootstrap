@@ -193,7 +193,7 @@ int bmc_invalidate_cache_main(struct xdp_md *ctx)
 
 
 /* SEC("bmc_write_reply") */
-static inline int bmc_write_reply_main(struct xdp_md *ctx)
+int bmc_write_reply_main(struct xdp_md *ctx)
 {
 	void *data_end = (void *)(long)ctx->data_end;
 	void *data = (void *)(long)ctx->data;
@@ -329,7 +329,7 @@ static inline int bmc_write_reply_main(struct xdp_md *ctx)
 }
 
 /* SEC("bmc_prepare_packet") */
-static inline int bmc_prepare_packet_main(struct xdp_md *ctx)
+int bmc_prepare_packet_main(struct xdp_md *ctx)
 {
 	if (bpf_xdp_adjust_head(ctx, -ADJUST_HEAD_LEN)) {
 		// // pop empty packet buffer memory to increase the available packet size
@@ -384,7 +384,7 @@ static inline int bmc_prepare_packet_main(struct xdp_md *ctx)
 }
 
 /* SEC("bmc_hash_keys") */
-static int bmc_hash_keys_main(struct xdp_md *ctx)
+int bmc_hash_keys_main(struct xdp_md *ctx)
 {
 
 	void *data_end = (void *)(long)ctx->data_end;
@@ -441,16 +441,16 @@ static int bmc_hash_keys_main(struct xdp_md *ctx)
 	if (entry->valid && entry->hash == key->hash) { // potential cache hit
 		bpf_spin_unlock(&entry->lock);
 		unsigned int i = 0;
-		// bpf_for(i, 0, key_len) {
-		// 	if (payload+i+1 >= data_end) {
-		// 		break;
-		// 	}
-		// 	key->data[i] = payload[i];
-		// }
-#pragma clang loop unroll(disable)
-		for (; i < key_len && payload+i+1 <= data_end; i++) { // copy the request key to compare it with the one stored in the cache later
+		bpf_for(i, 0, key_len) {
+			if (payload+i+1 >= data_end) {
+				break;
+			}
 			key->data[i] = payload[i];
 		}
+// #pragma clang loop unroll(disable)
+// 		for (; i < key_len && payload+i+1 <= data_end; i++) { // copy the request key to compare it with the one stored in the cache later
+// 			key->data[i] = payload[i];
+// 		}
 		key->len = key_len;
 		pctx->key_count++;
 	} else { // cache miss
